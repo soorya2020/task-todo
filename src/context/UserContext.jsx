@@ -1,4 +1,5 @@
 import { createContext, useState, useContext } from "react";
+import { API } from "../../utils/axios";
 
 const UserContext = createContext();
 
@@ -10,15 +11,21 @@ export const UserProvider = ({ children }) => {
     },
   ); //TODO : is this method good?
 
-  const login = (userData) => {
+  const login = (userData, token) => {
     setUser(userData);
     localStorage.setItem("user", JSON.stringify(userData));
-    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("token", token);
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.clear();
+  const logout = async () => {
+    try {
+      await API.post("/auth/sign-out");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    } finally {
+      setUser(null);
+      localStorage.clear();
+    }
   };
 
   return (

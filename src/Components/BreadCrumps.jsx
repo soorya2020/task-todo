@@ -1,39 +1,61 @@
 import React from "react";
-import { NAV_LINKS } from "../constants";
-import { NavLink } from "react-router-dom";
+import { NavLink, useParams } from "react-router-dom";
+import { useTodos } from "../context/TodoContext";
 
 export const BreadCrumps = () => {
+  const { id } = useParams();
+  const { collections } = useTodos();
+
+  // 1. Find the collection name
+  const currentCollection = collections?.find((c) => c._id === id);
+  const secondLevelName =
+    id === "new" ? "New Collection" : currentCollection?.name || "Untitled";
+
   return (
     <nav
       aria-label="Breadcrumb"
-      className="bg-gray-100 px-4 py-2 rounded-md text-sm "
+      className="px-6 py-3 text-sm border-b border-slate-100 bg-white "
     >
-      <ol
-        className=" flex flex-wrap items-center justify-center
-      text-gray-600
-      sm:justify-start"
-      >
-        {NAV_LINKS.map((item, index) => (
-          <li key={item.path} className="flex items-center">
+      <ol className="flex items-center text-slate-500 font-medium">
+        {/* Level 1: Home/Dashboard */}
+        <li className="flex items-center">
+          <NavLink
+            to="/app/todos"
+            end
+            className={({ isActive }) =>
+              isActive
+                ? "text-blue-600 font-black"
+                : "hover:text-blue-600 transition-colors"
+            }
+          >
+            Collections
+          </NavLink>
+        </li>
+
+        {/* Level 2: The Specific Todo Collection */}
+        {id && (
+          <li className="flex items-center">
+            <span
+              className="px-3 text-slate-300 select-none"
+              aria-hidden="true"
+            >
+             /
+            </span>
             <NavLink
-              to={item.path}
+              // Construct the dynamic path
+              to={`/app/todo/${id}`}
               className={({ isActive }) =>
                 isActive
-                  ? "text-blue-600 font-bold"
-                  : "text-gray-600 hover:text-blue-600"
+                  ? "text-blue-600 font-black"
+                  : "hover:text-blue-600 transition-colors"
               }
-              aria-current={index === NAV_LINKS.length - 1 ? "page" : undefined}
             >
-              {item.name}
-            </NavLink>
-
-            {index < NAV_LINKS.length - 1 && (
-              <span className="px-2" aria-hidden="true">
-                /
+              <span className="truncate max-w-[150px] inline-block align-bottom">
+                {secondLevelName}
               </span>
-            )}
+            </NavLink>
           </li>
-        ))}
+        )}
       </ol>
     </nav>
   );

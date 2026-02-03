@@ -7,11 +7,11 @@ import { UserProvider } from "./context/UserContext";
 import { TodoProvider } from "./context/TodoContext";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <UserProvider>
-      <TodoProvider>
-        <RouterProvider router={router} />
-      </TodoProvider>
-    </UserProvider>
-  </StrictMode>,
+  // <StrictMode>
+  <UserProvider>
+    <TodoProvider>
+      <RouterProvider router={router} />
+    </TodoProvider>
+  </UserProvider>,
+  // </StrictMode>,
 );

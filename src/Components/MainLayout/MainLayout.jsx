@@ -1,29 +1,45 @@
-import React from "react";
+import React, { useState } from "react";
 import { Outlet, NavLink, Link } from "react-router-dom";
 import BreadCrumps from "../BreadCrumps";
 import Logo from "../Logo";
 import LayoutFooter from "./LayoutFooter";
 import UserSection from "./UserSection";
 import { useUser } from "../../context/UserContext";
-
+import { delay } from "../../helpers";
+import LogoutLoader from "../LogoutLoader";
 const MainLayout = () => {
   const { user, logout } = useUser();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    try {
+      await Promise.all([logout(), delay(1500)]); //added custum delay for loggout out ui
+    } catch (err) {
+      console.error("Logout failed", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return <LogoutLoader />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
-      
       {/* Sticky Header Container */}
-      <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-2 bg-white/80 backdrop-blur-md border-b border-slate-200">
         <NavLink to="/" className="tracking-tighter">
           <Logo size={"small"} />
         </NavLink>
 
-        <UserSection user={user} />
+        <UserSection user={user} onLogout={handleLogout} />
       </header>
 
       {/* Breadcrumbs appear only for logged-in users */}
       {user && (
-        <div className="bg-white border-b border-slate-100">
+        <div className="bg-white border-b border-slate-100 ">
           <BreadCrumps />
         </div>
       )}
