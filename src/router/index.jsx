@@ -1,6 +1,5 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import Home from "../Components/LandingPage";
-import Login from "../Components/Login";
+import Authentication from "../Components/Authentication";
 import Todo from "../Components/Todo";
 import MainLayout from "../Components/MainLayout";
 import NotFound from "../Components/NotFound";
@@ -16,8 +15,8 @@ const router = createBrowserRouter([
     element: <LandingPage />,
   },
   {
-    path: "login", // Relative: result is /app/login
-    element: <Login />,
+    path: "login",
+    element: <Authentication />,
   },
 
   // PROTECTED APP SPACE: Inside MainLayout
@@ -32,7 +31,7 @@ const router = createBrowserRouter([
       },
 
       {
-        path: "todos", // Relative: result is /app/todos
+        path: "todos",
         element: (
           <ProtectedRoute>
             <CreateTodo />
