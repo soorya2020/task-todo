@@ -3,8 +3,15 @@ import { createRoot } from "react-dom/client";
 import "./index.css";
 import { RouterProvider } from "react-router-dom";
 import router from "./router";
+import { UserProvider } from "./context/UserContext";
+import { TodoProvider } from "./context/TodoContext";
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <UserProvider>
+      <TodoProvider>
+        <RouterProvider router={router} />
+      </TodoProvider>
+    </UserProvider>
   </StrictMode>,
 );

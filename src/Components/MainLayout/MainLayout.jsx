@@ -4,22 +4,18 @@ import BreadCrumps from "../BreadCrumps";
 import Logo from "../Logo";
 import LayoutFooter from "./LayoutFooter";
 import UserSection from "./UserSection";
-// --- SUB-COMPONENTS ---
-
-// const AppLogo = () => <div className="font-bold text-2xl text-primary">dd</div>;
-
-// --- MAIN LAYOUT COMPONENT ---
+import { useUser } from "../../context/UserContext";
 
 const MainLayout = () => {
-  const userJson = localStorage.getItem("user");
-  const user = userJson ? JSON.parse(userJson) : null;
+  const { user, logout } = useUser();
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50">
+      
       {/* Sticky Header Container */}
       <header className="sticky top-0 z-50 flex justify-between items-center px-6 py-4 bg-white/80 backdrop-blur-md border-b border-slate-100">
         <NavLink to="/" className="tracking-tighter">
-          <Logo size={'small'} /> 
+          <Logo size={"small"} />
         </NavLink>
 
         <UserSection user={user} />
