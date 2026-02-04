@@ -1,9 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import FooterActions from "./FooterActions";
-import TodoHeader from "./TodoHeader";
 import TodoItem from "./TodoItem";
-import { useTodos } from "../../context/TodoContext";
 import { API } from "../../../utils/axios";
 
 const Todo = () => {
@@ -12,21 +9,23 @@ const Todo = () => {
   const [selectedCollection, setSelectedCollection] = useState(null);
   const [title, setTitle] = useState("");
   const [todos, setTodos] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const pendingTasks = todos.filter((item) => !item.completed);
   const completedTasks = todos.filter((item) => item.completed);
 
+  //fetch collection during initial render and when id chages
   useEffect(() => {
     if (id === "new") return;
-
     let isMounted = true;
-
     const fetchCollection = async () => {
       try {
         const { data } = await API.get(`/todos/collections/${id}`);
         if (isMounted) setSelectedCollection(data.data);
       } catch (err) {
         console.error("Failed to fetch collection", err);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -37,6 +36,7 @@ const Todo = () => {
     };
   }, [id]);
 
+  //used to save 
   useEffect(() => {
     const savedDraft = localStorage.getItem(`todo_draft_${id}`);
 
@@ -137,6 +137,8 @@ const Todo = () => {
       console.error("Auto-save failed:", err);
     }
   };
+
+  if (loading) return <>loading</>;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
