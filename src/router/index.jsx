@@ -9,7 +9,7 @@ import ProtectedRoute from "../ProtectedRoute";
 import { ROUTES } from "../constants";
 
 const router = createBrowserRouter([
-  // LANDING: Outside MainLayout (Clean slate)
+  // LANDING: Outside MainLayout
   {
     path: ROUTES.LANDING,
     element: <LandingPage />,
@@ -26,7 +26,7 @@ const router = createBrowserRouter([
     errorElement: <NotFound />,
     children: [
       {
-        index: true, // Handle "/app" directly
+        index: true,
         element: <Navigate to={ROUTES.TODOS} replace />,
       },
 

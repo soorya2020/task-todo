@@ -11,6 +11,7 @@ const Todo = () => {
   const [title, setTitle] = useState("");
   const [todos, setTodos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const pendingTasks = todos.filter((item) => !item.completed);
   const completedTasks = todos.filter((item) => item.completed);
@@ -25,6 +26,7 @@ const Todo = () => {
         if (isMounted) setSelectedCollection(data.data);
       } catch (err) {
         console.error("Failed to fetch collection", err);
+        setError("fetching todo failed");
       } finally {
         setLoading(false);
       }
@@ -37,26 +39,30 @@ const Todo = () => {
     };
   }, [id]);
 
-  //used to save
+  //used to parse title and todos from local storage to state variables
   useEffect(() => {
-    const savedDraft = localStorage.getItem(`todo_draft_${id}`);
+    try {
+      const savedDraft = localStorage.getItem(`todo_draft_${id}`);
 
-    if (savedDraft) {
-      const parsed = JSON.parse(savedDraft);
-      setTitle(parsed.title || "");
-      setTodos(parsed.items || []);
-      return;
-    }
+      if (savedDraft) {
+        const parsed = JSON.parse(savedDraft);
+        setTitle(parsed.title || "");
+        setTodos(parsed.items || []);
+        return;
+      }
 
-    if (id !== "new" && selectedCollection) {
-      setTitle(selectedCollection.name || "");
-      setTodos(selectedCollection.todos || []);
-      return;
-    }
+      if (id !== "new" && selectedCollection) {
+        setTitle(selectedCollection.name || "");
+        setTodos(selectedCollection.todos || []);
+        return;
+      }
 
-    if (id === "new") {
-      setTitle("");
-      setTodos([]);
+      if (id === "new") {
+        setTitle("");
+        setTodos([]);
+      }
+    } catch (error) {
+      console.error(error);
     }
   }, [id, selectedCollection]);
 
@@ -80,14 +86,16 @@ const Todo = () => {
     }
 
     const timeoutId = setTimeout(() => {
+      //delayed api call
       saveToDatabase(title, todos);
-    }, 1000); // ⏳ wait 1s after last change
+    }, 1000);
 
     return () => {
       clearTimeout(timeoutId); // cancel previous save
     };
   }, [title, todos]);
 
+  //todo crud operations
   const toggleItem = (itemId) => {
     setTodos((prev) =>
       prev.map((i) =>
@@ -121,21 +129,18 @@ const Todo = () => {
   const saveToDatabase = async (name, todos) => {
     try {
       const payload = {
-        name: name.trim() || "Untitled Collection",
+        name: name.trim() || "Untitled ",
         todos: todos
           .filter((t) => t.task?.trim())
           .map(({ _id, isNew, ...rest }) => (isNew ? rest : { _id, ...rest })),
       };
 
-      if (id === "new") {
-        await API.post("/todos/collections", payload);
-      } else {
-        await API.put(`/todos/collections/${id}`, payload);
-      }
+      await API.put(`/todos/collections/${id}`, payload);
 
       localStorage.removeItem(`todo_draft_${id}`);
     } catch (err) {
       console.error("Auto-save failed:", err);
+      setError('failed to save in db')
     }
   };
 
