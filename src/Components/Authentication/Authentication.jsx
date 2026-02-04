@@ -9,6 +9,7 @@ import AuthToggle from "./AuthToggle";
 import { useUser } from "../../context/UserContext";
 
 import { API } from "../../../utils/axios";
+import { validateForm } from "../../helpers";
 
 const Authentication = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -31,6 +32,17 @@ const Authentication = () => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
+
+    // Run frontend validation
+    const validationError = validateForm(formData, isLogin);
+    console.log(validationError);
+
+    if (validationError) {
+      setError(validationError);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const endpoint = isLogin ? "/sign-in" : "/sign-up";
       const response = await API.post("/auth" + endpoint, formData);
