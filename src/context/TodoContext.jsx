@@ -6,7 +6,6 @@ export const TodoProvider = ({ children }) => {
   const [collections, setCollections] = useState([]); // This will hold your Todo Folders
 
   const addCollection = (newCollection) => {
-    console.log(newCollection, "my new collections");
     setCollections([...collections, newCollection]);
   };
 

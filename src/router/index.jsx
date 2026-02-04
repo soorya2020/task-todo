@@ -3,7 +3,7 @@ import Authentication from "../Components/Authentication";
 import Todo from "../Components/Todo";
 import MainLayout from "../Components/MainLayout";
 import NotFound from "../Components/NotFound";
-import CreateTodo from "../Components/CreateTodo";
+import TodoCollections from "../Components/TodoCollections";
 import LandingPage from "../Components/LandingPage";
 import ProtectedRoute from "../ProtectedRoute";
 import { ROUTES } from "../constants";
@@ -34,7 +34,7 @@ const router = createBrowserRouter([
         path: "todos",
         element: (
           <ProtectedRoute>
-            <CreateTodo />
+            <TodoCollections />
           </ProtectedRoute>
         ),
       },

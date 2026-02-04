@@ -6,14 +6,22 @@ const TodoItem = ({ item, onToggle, onUpdate, onDelete }) => {
   };
 
   return (
-    <div className="group flex items-center gap-4 p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-100 hover:shadow-sm transition-all">
+    <div className="group flex items-center gap-3 sm:gap-4 p-2 bg-white border border-slate-100 rounded-2xl hover:border-blue-100 shadow-2xs hover:shadow-sm transition-all">
+      {/* Checkbox */}
       <button
-        onClick={() => handleClick()}
-        className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
-          item.completed
-            ? "bg-blue-600 border-blue-600"
-            : "bg-white border-slate-200 group-hover:border-blue-400"
-        }`}
+      
+        onClick={handleClick}
+        className={`
+      shrink-0
+      w-4 h-4 sm:w-6 sm:h-6
+      rounded-lg border-2 flex items-center justify-center
+      transition-all
+      ${
+        item.completed
+          ? "bg-blue-600 border-blue-600"
+          : "bg-white border-slate-200 group-hover:border-blue-400"
+      }
+    `}
       >
         {item.completed && (
           <svg
@@ -32,17 +40,31 @@ const TodoItem = ({ item, onToggle, onUpdate, onDelete }) => {
         )}
       </button>
 
+      {/* Input */}
       <input
         disabled={item.completed}
         value={item.task}
         onChange={(e) => onUpdate(item._id, e.target.value)}
-        className={`flex-1 outline-none text-slate-700 font-medium transition-all bg-transparent
-    ${item.completed ? "line-through text-slate-300" : ""}`}
+        className={`
+      flex-1 min-w-0
+      outline-none bg-transparent
+      text-slate-700 font-medium
+      transition-all
+      ${item.completed ? "line-through text-slate-300" : ""}
+    `}
       />
+
+      {/* Delete */}
       <button
         title="Delete this task"
         onClick={() => onDelete(item._id)}
-        className="opacity-0 group-hover:opacity-100 transition-opacity duration-200  hover:bg-red-50 hover:cursor-pointer rounded-lg"
+        className="
+      shrink-0
+      opacity-100 sm:opacity-0 sm:group-hover:opacity-100
+      transition-opacity duration-200
+      p-2 rounded-lg
+      hover:bg-red-50
+    "
       >
         <span className="text-lg">🗑️</span>
       </button>

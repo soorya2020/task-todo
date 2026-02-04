@@ -4,12 +4,7 @@ import { API } from "../../utils/axios";
 const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
-  const [user, setUser] = useState(
-    JSON.parse(localStorage.getItem("user")) || {
-      name: "soorya",
-      email: "soorya@gmail.com",
-    },
-  ); //TODO : is this method good?
+  const [user, setUser] = useState(JSON.parse(localStorage.getItem("user")));
 
   const login = (userData, token) => {
     setUser(userData);

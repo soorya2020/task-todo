@@ -4,6 +4,7 @@ import NewTaskCard from "./NewTaskCard";
 import TodoPreviewCard from "./TodoPreviewCard";
 import ErrorState from "../ErrorState";
 import SetupLoadingScreen from "./SetupLoadingScreen";
+import Loading from "../Loading";
 import { useTodos } from "../../context/TodoContext";
 import { API } from "../../../utils/axios";
 import { delay } from "../../helpers";
@@ -12,29 +13,30 @@ import {
   TODO_PREPARING_DELAY,
 } from "../../constants";
 
-const CreateTodo = () => {
+const TodoCollections = () => {
   const navigate = useNavigate();
   const { collections, addCollection, setCollections } = useTodos();
-  const [isLoading, setIsLoading] = useState(true); // Start as true
+  const [showShimmerUi, setShowShimmerUi] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isSettingUp, setIsSettingUp] = useState(false); // New state for defaults
   const [error, setError] = useState(null);
 
   const fetchCollections = async () => {
     try {
-      setIsLoading(true);
+      setShowShimmerUi(true);
       const response = await API.get("/todos/collections");
       const fetchedData = response.data.data || [];
       // If user is brand new (0 collections), create defaults
       if (fetchedData.length === 0) {
         await createDefaultCollections();
       } else {
-        setCollections(fetchedData);
+        setCollections(fetchedData.reverse());
       }
     } catch (err) {
       console.error("Fetch error:", err);
       setError("Failed to load collections");
     } finally {
-      setIsLoading(false);
+      setShowShimmerUi(false);
     }
   };
 
@@ -52,7 +54,7 @@ const CreateTodo = () => {
 
       // Refresh the list after creating them
       const finalResponse = await API.get("/todos/collections");
-      setCollections(finalResponse.data.data);
+      setCollections(finalResponse.data.data.reverse());
     } catch (err) {
       console.error("Fetch error:", err);
       setError("Could not set up default collections");
@@ -61,24 +63,54 @@ const CreateTodo = () => {
     }
   };
 
+  const handleDelete = async (collectionId) => {
+    try {
+      await API.delete(`/todos/collections/${collectionId}`);
+
+      // Optional: update UI immediately (recommended)
+      setCollections((prev) =>
+        prev.filter((item) => item._id !== collectionId),
+      );
+    } catch (err) {
+      setError("failed to delete collectoin");
+      console.error("Failed to delete collection", err);
+    }
+  };
+
   useEffect(() => {
     fetchCollections();
   }, []); // Runs once on mount
 
+  const createNewCollectoin = async () => {
+    try {
+      setLoading(true);
+      const response = await API.post("/todos/collections", {
+        name: "untitled",
+        todos: [],
+      });
+      const newCollectionId = response.data.data._id;
+      setLoading(false);
+      navigate("/app/todo/" + newCollectionId);
+    } catch (error) {
+      setLoading(false);
+    }
+  };
+
+  if (loading) return <Loading text="Createing your todo list..." />;
+
   if (error)
-    return <ErrorState message={error} onRetry={() => fetchCollections()} />;
+    return (
+      <ErrorState message={error} onRetry={() => window.location.reload()} />
+    );
 
   if (isSettingUp) return <SetupLoadingScreen timer={TODO_PREPARING_DELAY} />;
 
-  if (isLoading) {
+  if (showShimmerUi) {
     return (
       <div className="p-8 bg-slate-50 min-h-screen">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {/* We keep the NewTaskCard visible or show a skeleton for it too */}
           <div className="h-64 border-2 border-dashed border-slate-200 rounded-[2.5rem] animate-pulse" />
-
-          {/* Render 7 skeleton cards to fill the grid */}
-
           {[...Array(7)].map((_, i) => (
             <SkeletonCard key={i} />
           ))}
@@ -86,18 +118,18 @@ const CreateTodo = () => {
       </div>
     );
   }
-  console.log(collections);
 
   return (
     <div className="p-8 bg-slate-50 min-h-screen">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <NewTaskCard onClick={() => navigate("/app/todo/new")} />
+        <NewTaskCard onClick={() => createNewCollectoin()} />
         {collections.map((item, index) => (
           <TodoPreviewCard
             key={index}
             item={item}
             index={index}
             onClick={(id) => navigate("/app/todo/" + id)}
+            onDelete={(id) => handleDelete(id)}
           />
         ))}
       </div>
@@ -105,7 +137,7 @@ const CreateTodo = () => {
   );
 };
 
-export default CreateTodo;
+export default TodoCollections;
 
 //Skeleton loading element
 const SkeletonCard = () => {

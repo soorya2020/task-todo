@@ -1,25 +1,43 @@
 import { TODO_PREVIEW_LIMIT } from "../../constants";
 import { formatDate } from "../../helpers";
 
-const TodoPreviewCard = ({ item, onClick, index }) => {
+const TodoPreviewCard = ({ item, onClick, index, onDelete }) => {
   const inCompletedTodoList = item.todos.filter(
     (item) => item.completed == false,
   );
 
+  const handleDelete = (event, id) => {
+    event.stopPropagation();
+    onDelete(id);
+  };
+
   return (
     <div
       onClick={() => onClick(item._id)}
-      className="group h-80 bg-white border border-slate-100 rounded-[2.5rem] p-7 shadow-[0_10px_30px_rgba(0,0,0,0.02)] hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all cursor-pointer flex flex-col"
+      className="group h-80 bg-white border border-slate-100 rounded-2xl p-7 drop-shadow-2xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all cursor-pointer flex flex-col"
     >
       {/* Header */}
       <div className="mb-4">
         <div className="flex justify-between items-start mb-3">
           {/* Date Badge */}
-          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-tighter bg-slate-100 text-slate-500">
+          <span className="px-3 py-1 rounded-full text-[10px] font-black uppercase bg-slate-100 text-slate-500">
             {item.createdAt ? formatDate(item.createdAt) : "No Date"}
           </span>
-          <div className="w-2 h-2 rounded-full bg-slate-200"></div>
+
+          {/* Delete */}
+          <button
+            onClick={(e) => handleDelete(e, item._id)}
+            className="
+        opacity-0 group-hover:opacity-100
+        text-slate-400 hover:text-red-500
+        transition-opacity
+        text-xs font-bold
+      "
+          >
+            Delete
+          </button>
         </div>
+
         <h3 className="text-xl font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors line-clamp-1">
           {item.name}
         </h3>

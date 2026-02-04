@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FooterActions from "./FooterActions";
 import TodoHeader from "./TodoHeader";
@@ -8,104 +8,122 @@ import { API } from "../../../utils/axios";
 
 const Todo = () => {
   const { id } = useParams();
-  const { collections } = useTodos();
 
+  const [selectedCollection, setSelectedCollection] = useState(null);
   const [title, setTitle] = useState("");
-  const [items, setItems] = useState([]);
-  const [isLoaded, setIsLoaded] = useState(false); // Guard flag
+  const [todos, setTodos] = useState([]);
 
-  const titleRef = useRef(title);
-  const itemsRef = useRef(items);
-
-  const selectedCollection = collections?.find((item) => item._id === id);
-
-  const pendingItems = items.filter((item) => !item.completed);
-  const completedItems = items.filter((item) => item.completed);
+  const pendingTasks = todos.filter((item) => !item.completed);
+  const completedTasks = todos.filter((item) => item.completed);
 
   useEffect(() => {
-    titleRef.current = title;
-    itemsRef.current = items;
-  }, [title, items]);
+    if (id === "new") return;
+
+    let isMounted = true;
+
+    const fetchCollection = async () => {
+      try {
+        const { data } = await API.get(`/todos/collections/${id}`);
+        if (isMounted) setSelectedCollection(data.data);
+      } catch (err) {
+        console.error("Failed to fetch collection", err);
+      }
+    };
+
+    fetchCollection();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   useEffect(() => {
-    if (isLoaded) return; // Don't run this again if we already have data
-
     const savedDraft = localStorage.getItem(`todo_draft_${id}`);
+
     if (savedDraft) {
       const parsed = JSON.parse(savedDraft);
       setTitle(parsed.title || "");
-      setItems(parsed.items || []);
-      setIsLoaded(true);
-    } else if (id !== "new" && selectedCollection) {
-      setTitle(selectedCollection.name || "");
-      setItems(selectedCollection.todos || []);
-      setIsLoaded(true);
-    } else if (id === "new") {
-      setIsLoaded(true); // Ready for a new entry
+      setTodos(parsed.items || []);
+      return;
     }
-  }, [selectedCollection, id, isLoaded]);
+
+    if (id !== "new" && selectedCollection) {
+      setTitle(selectedCollection.name || "");
+      setTodos(selectedCollection.todos || []);
+      return;
+    }
+
+    if (id === "new") {
+      setTitle("");
+      setTodos([]);
+    }
+  }, [id, selectedCollection]);
 
   // 2. Continuous LocalStorage Backup
   useEffect(() => {
-    if (isLoaded && (title || items.length > 0)) {
-      localStorage.setItem(
-        `todo_draft_${id}`,
-        JSON.stringify({ title, items }),
-      );
-    }
-  }, [title, items, id, isLoaded]);
+    const timeout = setTimeout(() => {
+      if (title || todos.length > 0) {
+        localStorage.setItem(
+          `todo_draft_${id}`,
+          JSON.stringify({ title, items: todos }),
+        );
+      }
+    }, 500); // debounce
+
+    return () => clearTimeout(timeout);
+  }, [title, todos, id]);
 
   useEffect(() => {
+    if (title.trim() === "" && todos.length === 0) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      saveToDatabase(title, todos);
+    }, 1000); // ⏳ wait 1s after last change
+
     return () => {
-      // Logic: Only save if the user actually typed something
-      if (titleRef.current.trim() !== "" || itemsRef.current.length > 0) {
-        saveToDatabase(titleRef.current, itemsRef.current);
-      }
+      clearTimeout(timeoutId); // cancel previous save
     };
-  }, []); // Only runs on unmount
+  }, [title, todos]);
 
   const toggleItem = (itemId) => {
-    setItems((prev) =>
+    setTodos((prev) =>
       prev.map((i) =>
-        i._id === itemId || i.id === itemId
-          ? { ...i, completed: !i.completed }
-          : i,
+        i._id === itemId ? { ...i, completed: !i.completed } : i,
       ),
     );
   };
 
   const updateItemText = (itemId, newText) => {
-    setItems((prev) =>
+    setTodos((prev) =>
       prev.map((i) => (i._id === itemId ? { ...i, task: newText } : i)),
     );
   };
 
   const deleteTodo = (id) => {
-    setItems((prev) => prev.filter((i) => i._id != id));
+    setTodos((prev) => prev.filter((i) => i._id !== id));
   };
 
   const addNewItem = () => {
-    const newItem = {
-      _id: Date.now().toString(), // Temporary ID for React keys
-      task: "", // Match your backend 'task' field
-      completed: false,
-      isNew: true, // Useful flag for styling/logic
-    };
-
-    setItems([...items, newItem]);
+    setTodos((prev) => [
+      ...prev,
+      {
+        _id: crypto.randomUUID(),
+        task: "",
+        completed: false,
+        isNew: true,
+      },
+    ]);
   };
 
   const saveToDatabase = async (name, todos) => {
     try {
       const payload = {
-        name: name || "Untitled Collection",
-        todos: todos.map((item) => {
-          if (item.isNew) {
-            const { _id, isNew, ...rest } = item; // Strip temporary _id and flag
-            return rest;
-          }
-          return item; // Keep existing items as is
-        }),
+        name: name.trim() || "Untitled Collection",
+        todos: todos
+          .filter((t) => t.task?.trim())
+          .map(({ _id, isNew, ...rest }) => (isNew ? rest : { _id, ...rest })),
       };
 
       if (id === "new") {
@@ -113,6 +131,7 @@ const Todo = () => {
       } else {
         await API.put(`/todos/collections/${id}`, payload);
       }
+
       localStorage.removeItem(`todo_draft_${id}`);
     } catch (err) {
       console.error("Auto-save failed:", err);
@@ -131,7 +150,7 @@ const Todo = () => {
 
       {/* 1. Pending Section */}
       <div className="space-y-3">
-        {pendingItems.map((item) => (
+        {pendingTasks.map((item) => (
           <TodoItem
             key={item._id}
             item={item}
@@ -149,17 +168,17 @@ const Todo = () => {
       </div>
 
       {/* 2. Completed Divider & Section */}
-      {completedItems.length > 0 && (
+      {completedTasks.length > 0 && (
         <div className="pt-6 space-y-3">
           <div className="flex items-center gap-4 px-2">
             <span className="text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
-              Completed ({completedItems.length})
+              Completed ({completedTasks.length})
             </span>
             <div className="h-[1px] w-full bg-slate-100"></div>
           </div>
 
           <div className="opacity-60 grayscale-[0.5]">
-            {completedItems.map((item) => (
+            {completedTasks.map((item) => (
               <TodoItem
                 key={item._id}
                 item={item}
