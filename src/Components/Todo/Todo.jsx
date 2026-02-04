@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import TodoItem from "./TodoItem";
+import Loading from "../Loading";
 import { API } from "../../../utils/axios";
 
 const Todo = () => {
@@ -36,7 +37,7 @@ const Todo = () => {
     };
   }, [id]);
 
-  //used to save 
+  //used to save
   useEffect(() => {
     const savedDraft = localStorage.getItem(`todo_draft_${id}`);
 
@@ -138,7 +139,7 @@ const Todo = () => {
     }
   };
 
-  if (loading) return <>loading</>;
+  if (loading) return <Loading />;
 
   return (
     <div className="max-w-2xl mx-auto p-6 space-y-8">
